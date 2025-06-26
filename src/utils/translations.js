@@ -1,8 +1,22 @@
 const Translations = {
+    // Current language
+    currentLanguage: localStorage.getItem('app_language') || 'hi',
+    
     // Translation data
     data: {
         // Common translations
         hi: {
+            // Authentication
+            'auth.login': 'लॉग इन करें',
+            'auth.logout': 'लॉग आउट',
+            'auth.google': 'Google से साइन इन करें',
+            'auth.welcome': 'स्वागत है',
+            'auth.profile': 'प्रोफाइल',
+            'auth.signup': 'नया खाता बनाएं',
+            'auth.signin': 'साइन इन करें',
+            'auth.or': 'या',
+            'auth.please_login': 'कृपया लॉग इन करें',
+            'auth.login_required': 'इस सुविधा के लिए लॉग इन आवश्यक है',
             loading: 'लोड हो रहा है...',
             error: 'त्रुटि',
             success: 'सफल',
@@ -288,6 +302,18 @@ const Translations = {
         },
         
         en: {
+            // Authentication
+            'auth.login': 'Login',
+            'auth.logout': 'Logout',
+            'auth.google': 'Sign in with Google',
+            'auth.welcome': 'Welcome',
+            'auth.profile': 'Profile',
+            'auth.signup': 'Create New Account',
+            'auth.signin': 'Sign In',
+            'auth.or': 'or',
+            'auth.please_login': 'Please log in',
+            'auth.login_required': 'Login required for this feature',
+            
             loading: 'Loading...',
             error: 'Error',
             success: 'Success',
@@ -340,19 +366,42 @@ const Translations = {
         }
     },
 
+    // Set current language and persist it
+    setLanguage(languageCode) {
+        this.currentLanguage = languageCode;
+        localStorage.setItem('app_language', languageCode);
+        
+        // Trigger language change event for components to update
+        window.dispatchEvent(new CustomEvent('languageChanged', { 
+            detail: { language: languageCode } 
+        }));
+    },
+
+    // Get current language
+    getCurrentLanguage() {
+        return this.currentLanguage;
+    },
+
     // Get translation
-    get(key, language = 'hi') {
-        if (this.data[language] && this.data[language][key]) {
-            return this.data[language][key];
+    get(key, language = null) {
+        const lang = language || this.currentLanguage;
+        
+        if (this.data[lang] && this.data[lang][key]) {
+            return this.data[lang][key];
         }
         
         // Fallback to Hindi if key not found in selected language
-        if (language !== 'hi' && this.data['hi'] && this.data['hi'][key]) {
+        if (lang !== 'hi' && this.data['hi'] && this.data['hi'][key]) {
             return this.data['hi'][key];
         }
         
         // If key not found anywhere, return the key itself
         return key;
+    },
+
+    // Shorthand method for getting translations
+    t(key, language = null) {
+        return this.get(key, language);
     },
 
     // Set translation

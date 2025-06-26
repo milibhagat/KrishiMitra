@@ -1,17 +1,20 @@
-const { useState, useEffect } = React;
+const { useState, useEffect, useReducer } = React;
 
 function App() {
     const [currentView, setCurrentView] = useState('home');
-    const [language, setLanguage] = useState('hi');
+    const [language, setLanguage] = useState(Translations.getCurrentLanguage());
     const [location, setLocation] = useState(null);
     const [loading, setLoading] = useState(true);
+    const [user, setUser] = useState(null);
+    const [showAuthModal, setShowAuthModal] = useState(false);
+    const [, forceUpdate] = useReducer(x => x + 1, 0);
 
     useEffect(() => {
         // Initialize app
         const initApp = async () => {
             try {
                 // Load saved language preference
-                const savedLang = StorageUtils.getItem('language') || 'hi';
+                const savedLang = Translations.getCurrentLanguage();
                 setLanguage(savedLang);
                 
                 // Load saved location
@@ -19,6 +22,9 @@ function App() {
                 if (savedLocation) {
                     setLocation(JSON.parse(savedLocation));
                 }
+
+                // Check authentication status
+                await checkAuthStatus();
                 
                 setLoading(false);
             } catch (error) {
@@ -28,18 +34,72 @@ function App() {
         };
 
         initApp();
+
+        // Listen for language changes
+        const handleLanguageChangeEvent = (event) => {
+            setLanguage(event.detail.language);
+            forceUpdate();
+        };
+
+        window.addEventListener('languageChanged', handleLanguageChangeEvent);
+
+        return () => {
+            window.removeEventListener('languageChanged', handleLanguageChangeEvent);
+        };
     }, []);
+
+    const checkAuthStatus = async () => {
+        try {
+            const response = await fetch('/api/auth/user');
+            if (response.ok) {
+                const data = await response.json();
+                if (data.success) {
+                    setUser(data.user);
+                }
+            }
+        } catch (error) {
+            console.log('Not authenticated');
+        }
+    };
+
+    const handleLanguageChange = (newLanguage) => {
+        Translations.setLanguage(newLanguage);
+        setLanguage(newLanguage);
+        StorageUtils.setItem('language', newLanguage);
+        
+        // Update user language preference if logged in
+        if (user) {
+            updateUserLanguage(newLanguage);
+        }
+    };
+
+    const updateUserLanguage = async (newLanguage) => {
+        try {
+            await fetch('/api/auth/profile', {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ language: newLanguage })
+            });
+        } catch (error) {
+            console.error('Failed to update user language:', error);
+        }
+    };
+
+    const handleLoginSuccess = (userData) => {
+        setUser(userData);
+        if (userData && userData.language) {
+            handleLanguageChange(userData.language);
+        }
+        setShowAuthModal(false);
+    };
 
     const t = (key) => Translations.get(key, language);
 
     const handleLocationSet = (newLocation) => {
         setLocation(newLocation);
         StorageUtils.setItem('location', JSON.stringify(newLocation));
-    };
-
-    const handleLanguageChange = (newLang) => {
-        setLanguage(newLang);
-        StorageUtils.setItem('language', newLang);
     };
 
     if (loading) {
@@ -126,7 +186,55 @@ function App() {
     return (
         <div className="app-container">
             <link rel="stylesheet" href="src/styles/App.css" />
+            
+            {/* Header with Authentication */}
+            <div className="header p-3 text-white">
+                <div className="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h4 className="mb-0">{t('farmers_friend')}</h4>
+                        <small className="opacity-75">{t('app.subtitle')}</small>
+                    </div>
+                    <div className="d-flex align-items-center gap-2">
+                        {/* Language Selector */}
+                        <select 
+                            className="form-select form-select-sm"
+                            value={language}
+                            onChange={(e) => handleLanguageChange(e.target.value)}
+                            style={{ width: 'auto', minWidth: '80px' }}
+                        >
+                            <option value="hi">हिंदी</option>
+                            <option value="en">English</option>
+                        </select>
+                        
+                        {/* User Authentication */}
+                        {user ? (
+                            <button 
+                                className="btn btn-light btn-sm"
+                                onClick={() => setShowAuthModal(true)}
+                            >
+                                <img 
+                                    src={user.profileImageUrl || '/placeholder-avatar.png'} 
+                                    alt="Profile"
+                                    className="rounded-circle me-2"
+                                    style={{ width: '24px', height: '24px', objectFit: 'cover' }}
+                                />
+                                {user.firstName}
+                            </button>
+                        ) : (
+                            <button 
+                                className="btn btn-light btn-sm"
+                                onClick={() => setShowAuthModal(true)}
+                            >
+                                <i className="fas fa-user me-2"></i>
+                                {t('auth.login')}
+                            </button>
+                        )}
+                    </div>
+                </div>
+            </div>
+
             {renderCurrentView()}
+            
             {currentView === 'home' && (
                 <Navigation 
                     t={t} 
@@ -134,6 +242,14 @@ function App() {
                     onNavigate={setCurrentView} 
                 />
             )}
+
+            {/* Authentication Modal */}
+            <AuthModal 
+                t={t}
+                isOpen={showAuthModal}
+                onClose={() => setShowAuthModal(false)}
+                onLoginSuccess={handleLoginSuccess}
+            />
         </div>
     );
 }
