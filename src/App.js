@@ -200,10 +200,13 @@ function App() {
                             className="form-select form-select-sm"
                             value={language}
                             onChange={(e) => handleLanguageChange(e.target.value)}
-                            style={{ width: 'auto', minWidth: '80px' }}
+                            style={{ width: 'auto', minWidth: '120px' }}
                         >
-                            <option value="hi">हिंदी</option>
-                            <option value="en">English</option>
+                            {Translations.getAvailableLanguages().map(lang => (
+                                <option key={lang} value={lang}>
+                                    {Translations.getLanguageName(lang)}
+                                </option>
+                            ))}
                         </select>
                         
                         {/* User Authentication */}
