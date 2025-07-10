@@ -1,0 +1,50 @@
+{
+  "name": "virtual-fitting-room",
+  "version": "1.0.0",
+  "description": "A full-stack virtual fitting room application with AI-powered size recommendations",
+  "main": "index.js",
+  "scripts": {
+    "install:backend": "cd backend && npm install",
+    "install:frontend": "cd frontend && npm install",
+    "install:all": "npm run install:backend && npm run install:frontend",
+    "start:backend": "cd backend && npm start",
+    "start:frontend": "cd frontend && npm start",
+    "dev:backend": "cd backend && npm run dev",
+    "dev:frontend": "cd frontend && npm start",
+    "dev": "concurrently \"npm run dev:backend\" \"npm run dev:frontend\"",
+    "build:frontend": "cd frontend && npm run build",
+    "build": "npm run build:frontend",
+    "test:backend": "cd backend && npm test",
+    "test:frontend": "cd frontend && npm test",
+    "test": "npm run test:backend && npm run test:frontend"
+  },
+  "keywords": [
+    "virtual-fitting-room",
+    "fashion",
+    "avatar",
+    "try-on",
+    "ai",
+    "size-recommendations",
+    "react",
+    "node.js",
+    "express",
+    "tailwind"
+  ],
+  "author": "Virtual Fitting Room Team",
+  "license": "MIT",
+  "devDependencies": {
+    "concurrently": "^8.2.2"
+  },
+  "engines": {
+    "node": ">=16.0.0",
+    "npm": ">=8.0.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/your-username/virtual-fitting-room.git"
+  },
+  "bugs": {
+    "url": "https://github.com/your-username/virtual-fitting-room/issues"
+  },
+  "homepage": "https://github.com/your-username/virtual-fitting-room#readme"
+}
